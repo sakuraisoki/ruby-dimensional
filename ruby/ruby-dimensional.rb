@@ -259,8 +259,9 @@ class UV
       end
    end
    
-   def value(u=nil)
+   def to_f(u=nil)
       if u!=nil then
+         return self.in(u)
       else
          return self.getValueAndDimension()[0]
       end
