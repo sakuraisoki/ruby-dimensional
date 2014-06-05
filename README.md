@@ -35,10 +35,10 @@ Ruby 2.1 or later is required.
 
     $ git clone git://github.com/sakuraisoki/ruby-dimensional.git
 
-#### (2) Copy to ${RUBYLIB}
+#### (2) Add to ${RUBYLIB}
 
     $ cd ruby-dimensional
-    $ cp ruby/
+    $ ln -s ruby/ruby-dimensional.rb ${RUBYLIB}/
 
 
 Example
