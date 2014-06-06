@@ -38,7 +38,7 @@ Ruby 2.1 or later is required.
 #### (2) Add to ${RUBYLIB}
 
     $ cd ruby-dimensional
-    $ ln -s ruby/ruby-dimensional.rb ${RUBYLIB}/
+    $ ln -s ruby/ruby-dimensional*.rb ${RUBYLIB}/
 
 
 Example
