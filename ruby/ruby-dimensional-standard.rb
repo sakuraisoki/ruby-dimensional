@@ -22,6 +22,7 @@ UV.DefineUserUnit :erg,  1e-7*:J
 
 #EM
 UV.DefineUserUnit :C,   :A*:s
+UV.DefineUserUnit :e,   1.60217657e-19*:C
 UV.DefineUserUnit :V,   :J/:C
 UV.DefineUserUnit :Ohm, :V/:A
 UV.DefineUserUnit :F,   :C/:V
