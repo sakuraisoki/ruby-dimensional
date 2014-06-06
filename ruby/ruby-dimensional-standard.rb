@@ -4,7 +4,8 @@ require "ruby-dimensional"
 UV.DefineUserUnit :Angstrom,  1e-10*:m
 UV.DefineUserUnit :Angstroem,  :Angstrom
 UV.DefineUserUnit :Ang, :Angstrom
-UV.DefineUserUnit :pc,  3.08567758e16*:m
+UV.DefineUserUnit :parsec,  3.08567758e16*:m 
+UV.DefineUserUnit :pc,  3.08567758e16*:m #parsec
 UV.DefineUserUnit :AU,  149597871*:km
 UV.DefineUserUnit :in,  25.4*:mm
 UV.DefineUserUnit :inch,  :in
@@ -16,7 +17,7 @@ UV.DefineUserUnit :sun,  0.1*:shaku
 #time
 UV.DefineUserUnit :Hz,  (:s**-1)
 
-#nergy
+#energy
 UV.DefineUserUnit :eV, 1.60217657e-19*:J
 UV.DefineUserUnit :erg,  1e-7*:J
 
