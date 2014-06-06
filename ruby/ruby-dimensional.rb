@@ -31,6 +31,14 @@ class UV
    
    def UV.DefineUserUnit(uname, u)
       unitname = uname.to_s
+#      @@prefixDefs.each{|s|
+#         if @@userUnitDefs.include?(s+unitname) then
+#            raise "UV: unit name conflict:"+unitname+" with "+@@userUnitDefs[s+unitname].name
+#         end
+#      }
+      if @@userUnitDefs.include?(unitname) then
+         raise "UV: unit name conflict:"+unitname
+      end
       if u.is_a?(UV) then
          u.rename(unitname)
          @@userUnitDefs[unitname] = u
@@ -388,7 +396,10 @@ class Fixnum
    alias_method :/, :divideByUV
 end
 
+class UnitBasis
+end
 
+##standard units
 UV.DefineUserUnit :g, UV.new(1e-3, Vector[1r,0r,0r,0r,0r])
 UV.DefineUserUnit :m, UV.new(1.00, Vector[0r,1r,0r,0r,0r])
 UV.DefineUserUnit :s, UV.new(1.00, Vector[0r,0r,1r,0r,0r])
@@ -399,52 +410,10 @@ UV.setUnitBasis [:kg, :m, :s, :A, :K]
 UV.DefineUserUnit :N,  :kg*:m/:s**2
 UV.DefineUserUnit :J,  :N*:m
 UV.DefineUserUnit :W,  :J/:s
-UV.DefineUserUnit :eV, 1.60217657e-19*:J
-UV.DefineUserUnit :erg,  1e-7*:J
 UV.DefineUserUnit :min, 60.0*:s
 UV.DefineUserUnit :hr, 60.0*:min
+UV.DefineUserUnit :hour, :hr
 UV.DefineUserUnit :day, 24.0*:hr
 UV.DefineUserUnit :yr, 365*:day
-UV.DefineUserUnit :Hz,  (:s**-1)
-
-   
-module Physical
-   module Constant
-      G = 6.67384e-11*(:m**3/:kg/:s**2)
-      LightSpeed = 299792458.0*(:m/:s)
-      Msun = 1.988e+30*:kg
-      ElectronMass = 9.11e-28*:g
-      ClassicalElectronRadius = 2.8179403267e-15*:m
-      StandardGraviry = 9.80665*(:m/:s**2)
-   end
-   module Formula
-      def KleinNishina(energy,theta)
-         e = 0.0
-         th = 0.0
-         if energy.is_a?(UV)
-            e = energy.in(:keV)
-         else
-            e = energy
-         end
-         if theta.is_a?(UV) then
-            if theta.nonDimensional? then
-               th = theta.sifactor
-            else
-               raise "Physical:Formula:KleinNishina: theta has dimension"
-            end
-         else
-            th = theta
-         end
-         
-         cos = Math.cos(th)
-         re = Physical::Constant::ClassicalElectronRadius
-         p = 1.0/( 1.0 + e/511.0*(1.0-cos) )
-         return 0.5*(re**2)*(p**2)*(p+1.0/p + cos**2 -1)
-      end
-      module_function :KleinNishina
-   end
-end
-
-class UnitBasis
-   @@test = UV.new(1)
-end
+UV.DefineUserUnit :year, :yr
+##standard units end

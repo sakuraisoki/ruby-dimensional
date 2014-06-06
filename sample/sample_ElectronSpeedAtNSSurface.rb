@@ -1,8 +1,11 @@
 #!/usr/bin/env ruby
 
 require "ruby-dimensional"
+require "ruby-dimensional-standard"
+require "ruby-dimensional-physics"
 
-include Physical
+include Physics
+
          
 UV.DefineUserUnit :Msun, Constant::Msun
 UV.DefineUserUnit :c, Constant::LightSpeed

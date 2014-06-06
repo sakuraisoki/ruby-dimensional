@@ -12,7 +12,6 @@ UV.DefineUserUnit :yd,  0.9144*:m
 UV.DefineUserUnit :yard,  :yd
 UV.DefineUserUnit :shaku,  10.0/33.0*:m
 UV.DefineUserUnit :sun,  0.1*:shaku
-UV.DefineUserUnit :sun,  0.1*:shaku
 
 #time
 UV.DefineUserUnit :Hz,  (:s**-1)

@@ -31,7 +31,7 @@ module Physics
          end
          
          cos = Math.cos(th)
-         re = Physical::Constant::ClassicalElectronRadius
+         re = Physics::Constant::ClassicalElectronRadius
          p = 1.0/( 1.0 + e/511.0*(1.0-cos) )
          return 0.5*(re**2)*(p**2)*(p+1.0/p + cos**2 -1)
       end

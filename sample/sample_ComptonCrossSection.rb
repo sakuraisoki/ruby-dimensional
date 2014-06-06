@@ -1,8 +1,10 @@
 #!/usr/bin/env ruby
 
 require "ruby-dimensional"
+require "ruby-dimensional-standard"
+require "ruby-dimensional-physics"
 
-include Physical
+include Physics
          
 #UV.showAllUnits
 
