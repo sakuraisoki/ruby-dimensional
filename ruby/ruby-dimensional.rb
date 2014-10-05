@@ -266,6 +266,10 @@ class UV
          raise "UV: cannot convert "+@dimension.to_s+" to "+unit.dimension.to_s
       end
    end
+
+   def with(*units)
+      Matrix[  ]
+   end
    
    def to_f(u=nil)
       if u!=nil then

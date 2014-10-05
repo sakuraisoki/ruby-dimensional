@@ -2,14 +2,21 @@ require "ruby-dimensional"
 
 module Physics
    module Constant
+      ElectronMass = 9.11e-31*:g
+      ProtonMass = 1.67262178e-27*:kg
+
+      PlankConstant = 6.62606957e-34*(:m**2 *:kg/:s)
+      h = PlankConstant
+      DiracConstant = PlankConstant/2.0/3.141592653589
+      hbar = DiracConstant
+
       GravitationalConstant = 6.67384e-11*(:m**3/:kg/:s**2)
       G = GravitationalConstant
+      StandardGraviry = 9.80665*(:m/:s**2)
       LightSpeed = 299792458.0*(:m/:s)
       SolarMass = 1.988e+30*:kg
       Msun = SolarMass
-      ElectronMass = 9.11e-28*:g
       ClassicalElectronRadius = 2.8179403267e-15*:m
-      StandardGraviry = 9.80665*(:m/:s**2)
    end
 
    UV.DefineUserUnit :Msun,   Constant::Msun
