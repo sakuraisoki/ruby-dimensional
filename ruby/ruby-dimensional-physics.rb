@@ -10,6 +10,10 @@ module Physics
       DiracConstant = PlankConstant/2.0/3.141592653589
       hbar = DiracConstant
 
+      StefanBoltzmannConstant = 5.670373e-8*(:W/:m**2/:K**4)
+
+      BoltzmannConstant = 1.3806488e-23*(:J/:K)
+
       GravitationalConstant = 6.67384e-11*(:m**3/:kg/:s**2)
       G = GravitationalConstant
       StandardGraviry = 9.80665*(:m/:s**2)
@@ -17,6 +21,7 @@ module Physics
       SolarMass = 1.988e+30*:kg
       Msun = SolarMass
       ClassicalElectronRadius = 2.8179403267e-15*:m
+      ThomsonCrossSection = 6.65246e-25*:cm**2
    end
 
    UV.DefineUserUnit :Msun,   Constant::Msun
