@@ -2,13 +2,22 @@ require "ruby-dimensional"
 
 module Physics
    module Constant
-      ElectronMass = 9.11e-31*:g
+      ElectronMass = 9.1093829e-31*:kg
       ProtonMass = 1.67262178e-27*:kg
 
       PlankConstant = 6.62606957e-34*(:m**2 *:kg/:s)
-      h = PlankConstant
+      @@h = PlankConstant
       DiracConstant = PlankConstant/2.0/3.141592653589
-      hbar = DiracConstant
+      @@hbar = DiracConstant
+      ElectricConstant = 8.85419e-12* :F/:m
+      Epsilon0 = ElectricConstant
+      PermittivityOfVacuum = ElectricConstant
+      ClassicalElectronRadius = 2.8179403267e-15*:m
+      ElementaryCharge = 1.6021766e-19*:C
+      # ElectricCharge = ElementaryCharge
+      @@e = ElementaryCharge
+      MagneticPermeabilityOfVacuum = 1.256637e-6 * :H/:m
+      Mu0 = MagneticPermeabilityOfVacuum
 
       StefanBoltzmannConstant = 5.670373e-8*(:W/:m**2/:K**4)
 
@@ -20,11 +29,11 @@ module Physics
       LightSpeed = 299792458.0*(:m/:s)
       SolarMass = 1.988e+30*:kg
       Msun = SolarMass
-      ClassicalElectronRadius = 2.8179403267e-15*:m
       ThomsonCrossSection = 6.65246e-25*:cm**2
    end
 
    UV.DefineUserUnit :Msun,   Constant::Msun
+   UV.DefineUserUnit :kb,   Constant::BoltzmannConstant
 
    module Formula
       def KleinNishina(photonEnergy,theta)

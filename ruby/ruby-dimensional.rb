@@ -125,17 +125,21 @@ class UV
       return @dimension==Vector[0r,0r,0r,0r,0r]
    end
 
+   @@userDefinedMultiply = {}
    def *(u)
       if u.is_a?(UV)
          return UV.new(@value*u.sifactor, @dimension+u.dimension, @name+" "+u.name)
       elsif u.is_a?(Symbol) then
          un = UV.findUnit(u.to_s)
          return UV.new(@value*un.sifactor, @dimension+un.dimension, @name+"*"+un.to_s)          
+      elsif @@userDefinedMultiply.include?(u.class) then
+         return @@userDefinedMultiply[u.class][self, u]
       else
          return UV.new(@value*u, @dimension, u.to_s+"*"+@name)
       end
    end
 
+   @@userDefinedDivide = {}
    def /(u)
       sep = "/"
       if u.is_a?(UV)
@@ -143,18 +147,24 @@ class UV
       elsif u.is_a?(Symbol) then
          un = UV.findUnit(u.to_s)
          return UV.new(@value/un.sifactor, @dimension-un.dimension, @name+sep+un.to_s)          
+      elsif @@userDefinedDivide.include?(u.class) then
+         return @@userDefinedDivide[u.class][self, u]
       else
          return UV.new(@value/u, @dimension, @name+sep+u.to_s)
       end
    end
          
+   @@userDefinedPlus = {}
    def +(u)
-      un = u.is_a?(UV)? u : u.toUV
-      if @dimension==un.dimension then
-         UV.new(@value+un.sifactor, @dimension, @name)
+      if @@userDefinedPlus.include?(u.class) then
+         return @@userDefinedPlus[u.class][self, u]
       else
-         p self
-         raise "UV: cannot be added with "+un.dimension.to_s
+         un = u.is_a?(UV)? u : u.toUV
+         if @dimension==un.dimension then
+            UV.new(@value+un.sifactor, @dimension, @name)
+         else
+            raise "UV: cannot be added with "+un.dimension.to_s
+         end
       end
    end
    def add(u)
@@ -167,13 +177,18 @@ class UV
       end
    end
 
+   @@userDefinedMinus = {}
    def -(u)
-      un = u.is_a?(UV)? u : u.toUV
-      if @dimension==un.dimension then
-         UV.new(@value-un.sifactor, @dimension, @name)
+      if @@userDefinedMinus.include?(u.class) then
+         return @@userDefinedMinus[u.class][self, u]
       else
-         p self
-         raise "UV: cannot be subtracted by "+un.dimension.to_s
+         un = u.is_a?(UV)? u : u.toUV
+         if @dimension==un.dimension then
+            UV.new(@value-un.sifactor, @dimension, @name)
+         else
+            p self
+            raise "UV: cannot be subtracted by "+un.dimension.to_s
+         end
       end
    end
    def sub(u)
@@ -228,28 +243,33 @@ class UV
       end
    end
       
+   @@userDefinedPower = {}
    def **(d)
-      r = 0.0
-      if d.is_a?(Numeric) then
-         r = d.rationalize
-      elsif d.is_a?(UV) then
-         if d.nonDimensional? then
-            r = d.sifactor.rationalize
+      if @@userDefinedPower.include?(d.class) then
+         return @@userDefinedPower[d.class][self, d]
+      else
+         r = 0.0
+         if d.is_a?(Numeric) then
+            r = d.rationalize
+         elsif d.is_a?(UV) then
+            if d.nonDimensional? then
+               r = d.sifactor.rationalize
+            else
+               raise "UV: cannot be powered to UV with unit "+d.dimension.to_s
+            end
          else
-            raise "UV: cannot be powered to UV with unit "+d.dimension.to_s
+            raise "UV: cannot be powered to "+r.class.to_s
          end
-      else
-         raise "UV: cannot be powered to "+r.class.to_s
-      end
-      
-      if r==1 then
-         return UV.new(@value, @dimension, @name)
-      elsif r==0 then
-         return UV.new()
-      elsif r.denominator==1 then
-         return UV.new(@value**r, @dimension*r, @name+"**"+r.numerator.to_s+"")
-      else
-         return UV.new(@value**r, @dimension*r, @name+"**("+r.to_s+")")
+         
+         if r==1 then
+            return UV.new(@value, @dimension, @name)
+         elsif r==0 then
+            return UV.new()
+         elsif r.denominator==1 then
+            return UV.new(@value**r, @dimension*r, @name+"**"+r.numerator.to_s+"")
+         else
+            return UV.new(@value**r, @dimension*r, @name+"**("+r.to_s+")")
+         end
       end
    end
 
@@ -341,64 +361,257 @@ end
 
 
 class Float
+    @@userDefinedMultiply = {} if not class_variable_defined?(:@@userDefinedMultiply) 
+    @@userDefinedDivide = {} if not class_variable_defined?(:@@userDefinedDivide)
+    @@userDefinedPlus = {} if not class_variable_defined?(:@@userDefinedPlus)
+    @@userDefinedMinus = {} if not class_variable_defined?(:@@userDefinedMinus)
    ["dummy"].each do |opr|
-      define_method("multiplyWithUV") do |operand|
-         if operand.is_a?(UV) then
-            return operand*self
-         elsif operand.is_a?(Symbol) then
-            return operand.toUV()*self
-         else
-            return dummymultiply(operand)
-         end
+       @@userDefinedMultiply[UV] = lambda {|fn,uv| return uv*fn}           
+       @@userDefinedMultiply[Symbol] = lambda {|fn,sym| return sym.toUV()*fn}           
+      if not method_defined?(:multiplyUser)
+             alias_method :dummymultiply, :*
+          define_method("multiplyUser") do |operand|
+              if operand.is_a?(Numeric)
+                  return dummymultiply(operand)
+              else
+                  if @@userDefinedMultiply.include?(operand.class) then
+                      return @@userDefinedMultiply[operand.class][self, operand]
+                  else
+                      raise "Float: * operation not defined for "+operand.class.to_s
+                  end
+              end
+          end
+            alias_method :*, :multiplyUser
       end
-      define_method("divideByUV") do |operand|
-         if operand.is_a?(UV) then
-            return UV.new(self, Vector[0r,0r,0r,0r,0r], self.to_s)/operand
-         elsif operand.is_a?(Symbol) then
-            return UV.new(self, Vector[0r,0r,0r,0r,0r], self.to_s)/operand.toUV()
-         else
-            return dummydivide(operand)
-         end
-      end
+
+        @@userDefinedDivide[UV] = lambda {|fn,uv| return UV.new(fn, Vector[0r,0r,0r,0r,0r], fn.to_s)/uv}
+        @@userDefinedDivide[Symbol] = lambda {|fn,sym| return UV.new(fn, Vector[0r,0r,0r,0r,0r], fn.to_s)/sym.toUV()}
+        if not method_defined?("divideUser") then
+            alias_method :dummydivide, :/
+            define_method("divideUser") do |operand|
+                if operand.is_a?(Numeric)
+                    return dummydivide(operand)
+                else
+                    if @@userDefinedDivide.include?(operand.class) then
+                        return @@userDefinedDivide[operand.class][self, operand]
+                    else
+                        raise "Float: / operation not defined for "+operand.class.to_s
+                    end
+                end
+            end
+            alias_method :/, :divideUser
+       end 
+
+        @@userDefinedPlus[UV] = lambda {|fn,uv| return uv+fn}
+        if not method_defined?(:plusUser)
+            alias_method :dummyplus, :+
+            define_method("plusUser") do |operand|
+                if operand.is_a?(Numeric)
+                    return dummyplus(operand)
+                else
+                    if @@userDefinedPlus.include?(operand.class) then
+                        return @@userDefinedPlus[operand.class][self, operand]
+                    else
+                        raise "Float: + operation not defined for "+operand.class.to_s
+                    end
+                end
+            end
+            alias_method :+, :plusUser
+        end
+
+        @@userDefinedMinus[UV] = lambda {|fn,uv| return uv-fn}
+        if not method_defined?(:minusUser)
+            alias_method :dummyminus, :-
+            define_method("minusUser") do |operand|
+                if operand.is_a?(Numeric)
+                    return dummyminus(operand)
+                else
+                    if @@userDefinedMinus.include?(operand.class) then
+                        return @@userDefinedMinus[operand.class][self, operand]
+                    else
+                        raise "Float: - operation not defined for "+operand.class.to_s
+                    end
+                end
+            end
+            alias_method :-, :minusUser
+        end
    end
    def toUV
       UV.new(self, Vector[0r,0r,0r,0r,0r], "1")
    end
-   alias_method :dummymultiply, :*
-   alias_method :*, :multiplyWithUV
-   alias_method :dummydivide, :/
-   alias_method :/, :divideByUV
+#   alias_method :dummymultiply, :*
+#   alias_method :*, :multiplyUser
+#   alias_method :dummydivide, :/
+#   alias_method :/, :divideUser
 end
 
+
 class Fixnum
+    @@userDefinedMultiply = {} if not class_variable_defined?(:@@userDefinedMultiply) 
+    @@userDefinedDivide = {} if not class_variable_defined?(:@@userDefinedDivide)
+    @@userDefinedPlus = {} if not class_variable_defined?(:@@userDefinedPlus)
+    @@userDefinedMinus = {} if not class_variable_defined?(:@@userDefinedMinus)
    ["dummy"].each do |opr|
-      define_method("multiplyWithUV") do |operand|
-         if operand.is_a?(UV) then
-            return operand*self
-         elsif operand.is_a?(Symbol) then
-            return operand.toUV()*self
-         else
-            return dummymultiply(operand)
-         end
+       @@userDefinedMultiply[UV] = lambda {|fn,uv| return uv*fn}           
+       @@userDefinedMultiply[Symbol] = lambda {|fn,sym| return sym.toUV()*fn}           
+      if not method_defined?(:multiplyUser)
+             alias_method :dummymultiply, :*
+          define_method("multiplyUser") do |operand|
+              if operand.is_a?(Numeric)
+                  return dummymultiply(operand)
+              else
+                  if @@userDefinedMultiply.include?(operand.class) then
+                      return @@userDefinedMultiply[operand.class][self, operand]
+                  else
+                      raise "Fixnum: * operation not defined for "+operand.class.to_s
+                  end
+              end
+          end
+            alias_method :*, :multiplyUser
       end
-      define_method("divideByUV") do |operand|
-         if operand.is_a?(UV) then
-            return UV.new(self, Vector[0r,0r,0r,0r,0r], self.to_s)/operand
-         elsif operand.is_a?(Symbol) then
-            return UV.new(self, Vector[0r,0r,0r,0r,0r], self.to_s)/operand.toUV()
-         else
-            return dummydivide(operand)
-         end
-      end
+
+        @@userDefinedDivide[UV] = lambda {|fn,uv| return UV.new(fn, Vector[0r,0r,0r,0r,0r], fn.to_s)/uv}
+        @@userDefinedDivide[Symbol] = lambda {|fn,sym| return UV.new(fn, Vector[0r,0r,0r,0r,0r], fn.to_s)/sym.toUV()}
+        if not method_defined?("divideUser") then
+            alias_method :dummydivide, :/
+            define_method("divideUser") do |operand|
+                if operand.is_a?(Numeric)
+                    return dummydivide(operand)
+                else
+                    if @@userDefinedDivide.include?(operand.class) then
+                        return @@userDefinedDivide[operand.class][self, operand]
+                    else
+                        raise "Fixnum: / operation not defined for "+operand.class.to_s
+                    end
+                end
+            end
+            alias_method :/, :divideUser
+       end 
+
+        @@userDefinedPlus[UV] = lambda {|fn,uv| return uv+fn}
+        if not method_defined?(:plusUser)
+            alias_method :dummyplus, :+
+            define_method("plusUser") do |operand|
+                if operand.is_a?(Numeric)
+                    return dummyplus(operand)
+                else
+                    if @@userDefinedPlus.include?(operand.class) then
+                        return @@userDefinedPlus[operand.class][self, operand]
+                    else
+                        raise "Float: + operation not defined for "+operand.class.to_s
+                    end
+                end
+            end
+            alias_method :+, :plusUser
+        end
+
+        @@userDefinedMinus[UV] = lambda {|fn,uv| return uv-fn}
+        if not method_defined?(:minusUser)
+            alias_method :dummyminus, :-
+            define_method("minusUser") do |operand|
+                if operand.is_a?(Numeric)
+                    return dummyminus(operand)
+                else
+                    if @@userDefinedMinus.include?(operand.class) then
+                        return @@userDefinedMinus[operand.class][self, operand]
+                    else
+                        raise "Float: - operation not defined for "+operand.class.to_s
+                    end
+                end
+            end
+            alias_method :-, :minusUser
+        end
    end
    def toUV
       UV.new(self, Vector[0r,0r,0r,0r,0r], "1")
    end
-   alias_method :dummymultiply, :*
-   alias_method :*, :multiplyWithUV
-   alias_method :dummydivide, :/
-   alias_method :/, :divideByUV
+#   alias_method :dummymultiply, :*
+#   alias_method :*, :multiplyUser
+#   alias_method :dummydivide, :/
+#   alias_method :/, :divideUser
 end
+
+class Rational
+    @@userDefinedMultiply = {} if not class_variable_defined?(:@@userDefinedMultiply) 
+    @@userDefinedDivide = {} if not class_variable_defined?(:@@userDefinedDivide)
+    @@userDefinedPlus = {} if not class_variable_defined?(:@@userDefinedPlus)
+    @@userDefinedMinus = {} if not class_variable_defined?(:@@userDefinedMinus)
+   ["dummy"].each do |opr|
+       @@userDefinedMultiply[UV] = lambda {|r,uv| return uv*r}           
+       @@userDefinedMultiply[Symbol] = lambda {|r,sym| return sym.toUV()*r}           
+      if not method_defined?(:multiplyUser)
+             alias_method :dummymultiply, :*
+          define_method("multiplyUser") do |operand|
+              if operand.is_a?(Numeric)
+                  return dummymultiply(operand)
+              else
+                  if @@userDefinedMultiply.include?(operand.class) then
+                      return @@userDefinedMultiply[operand.class][self, operand]
+                  else
+                      raise "Rational: * operation not defined for "+operand.class.to_s
+                  end
+              end
+          end
+            alias_method :*, :multiplyUser
+      end
+
+        @@userDefinedDivide[UV] = lambda {|r,uv| return UV.new(r, Vector[0r,0r,0r,0r,0r], r.to_s)/uv}
+        @@userDefinedDivide[Symbol] = lambda {|r,sym| return UV.new(r, Vector[0r,0r,0r,0r,0r], r.to_s)/sym.toUV()}
+        if not method_defined?("divideUser") then
+            alias_method :dummydivide, :/
+            define_method("divideUser") do |operand|
+                if operand.is_a?(Numeric)
+                    return dummydivide(operand)
+                else
+                    if @@userDefinedDivide.include?(operand.class) then
+                        return @@userDefinedDivide[operand.class][self, operand]
+                    else
+                        raise "Rational: / operation not defined for "+operand.class.to_s
+                    end
+                end
+            end
+            alias_method :/, :divideUser
+       end 
+
+        @@userDefinedPlus[UV] = lambda {|fn,uv| return uv+fn}
+        if not method_defined?(:plusUser)
+            alias_method :dummyplus, :+
+            define_method("plusUser") do |operand|
+                if operand.is_a?(Numeric)
+                    return dummyplus(operand)
+                else
+                    if @@userDefinedPlus.include?(operand.class) then
+                        return @@userDefinedPlus[operand.class][self, operand]
+                    else
+                        raise "Float: + operation not defined for "+operand.class.to_s
+                    end
+                end
+            end
+            alias_method :+, :plusUser
+        end
+
+        @@userDefinedMinus[UV] = lambda {|fn,uv| return uv-fn}
+        if not method_defined?(:minusUser)
+            alias_method :dummyminus, :-
+            define_method("minusUser") do |operand|
+                if operand.is_a?(Numeric)
+                    return dummyminus(operand)
+                else
+                    if @@userDefinedMinus.include?(operand.class) then
+                        return @@userDefinedMinus[operand.class][self, operand]
+                    else
+                        raise "Float: - operation not defined for "+operand.class.to_s
+                    end
+                end
+            end
+            alias_method :-, :minusUser
+        end
+   end
+   def toUV
+      UV.new(self, Vector[0r,0r,0r,0r,0r], "1")
+   end
+end
+
 
 class UnitBasis
 end
