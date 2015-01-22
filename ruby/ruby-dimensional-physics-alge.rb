@@ -16,14 +16,14 @@ module Physics
       module_function :KleinNishina
 
 
-      def ComptonScatter()
+      def ComptonScatterEnergy()
          e = Alge.new(:E)
          th = Alge.new(:theta)
          
          cos = Alge.new(:cos, [th])
          return e/(1.0 + e/(511.0*:keV)*(1.0-cos))
       end
-      module_function :ComptonScatter
+      module_function :ComptonScatterEnergy
 
 
       def EddingtonLuminosity()
@@ -33,12 +33,42 @@ module Physics
       end
       module_function :EddingtonLuminosity
 
+      def NSEddingtonLuminosity()
+         return (1.5e+38* :erg/:s) * 1.4
+      end
+      module_function :NSEddingtonLuminosity
+      class << self
+         alias_method :NSLedd, :NSEddingtonLuminosity
+      end
+
       def AlfvenRadius()
          mdot = Alge.new(:Mdot)
          b = Alge.new(:B)
          return (6.8e+3*:km)*(mdot / (1e-10*:Msun/:yr))**(-2/7r)*(b / (1e12*:G))**(4/7r)
       end
       module_function :AlfvenRadius
+
+      def CorotationRadius()
+         p = Alge.new(:P)
+         m = Alge.new(:M)
+         return (Constant::G*m/(4.0*Math::PI**2))**(1/3r) * p**(2/3r)
+      end
+      module_function :CorotationRadius
+
+      def NSCorotationRadius()
+         p = Alge.new(:P)
+         return (Constant::G*1.4*Constant::Msun/(4.0*Math::PI**2))**(1/3r) * p**(2/3r)
+      end
+      module_function :NSCorotationRadius
+
+      def NSMassAccretionRate()
+         l = Alge.new(:L)
+         return l*(10*:km/(Constant::G*1.4*Constant::Msun))
+      end
+      module_function :NSMassAccretionRate
+      class << self
+         alias_method :NSMdot, :NSMassAccretionRate         
+      end
 
       def SchwarzschildRadius()
          m = Alge.new(:M)
